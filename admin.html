@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Admin Panel — NeuroForge Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07070a;--s1:#0f0f14;--s2:#161620;--s3:#1c1c28;--border:rgba(255,255,255,0.08);--cyan:#00e5ff;--cyan-dim:rgba(0,229,255,0.1);--orange:#ff6b2b;--green:#2ecc71;--red:#e74c3c;--white:#f0f0f5;--muted:#6b6b80;--fh:'Syne',sans-serif;--fb:'DM Sans',sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--white);font-family:var(--fb);min-height:100vh;display:flex}
+
+/* LOGIN */
+#login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:2rem}
+.login-box{background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:3rem;width:360px;text-align:center}
+.login-logo{font-family:var(--fh);font-weight:800;font-size:1.4rem;margin-bottom:.5rem}
+.login-logo span{color:var(--cyan)}
+.login-sub{color:var(--muted);font-size:.85rem;margin-bottom:2rem}
+.login-box input{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:.9rem 1rem;color:var(--white);font-family:var(--fb);font-size:.95rem;outline:none;margin-bottom:1rem;transition:border-color .2s}
+.login-box input:focus{border-color:rgba(0,229,255,.4)}
+.login-btn{width:100%;background:var(--cyan);color:#000;border:none;padding:.9rem;border-radius:8px;font-family:var(--fh);font-weight:700;font-size:1rem;cursor:pointer;letter-spacing:.04em;transition:opacity .2s}
+.login-btn:hover{opacity:.85}
+.login-err{color:var(--red);font-size:.8rem;margin-top:.5rem;display:none}
+
+/* SIDEBAR */
+#sidebar{width:240px;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:50;overflow-y:auto}
+.sb-logo{padding:1.5rem 1.4rem;border-bottom:1px solid var(--border)}
+.sb-logo-txt{font-family:var(--fh);font-weight:800;font-size:1rem}
+.sb-logo-txt span{color:var(--cyan)}
+.sb-logo-sub{color:var(--muted);font-size:.72rem;margin-top:.2rem}
+.sb-nav{padding:.8rem;flex:1}
+.sb-section-lbl{font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);padding:.6rem .6rem .3rem;font-weight:600}
+.sb-link{display:flex;align-items:center;gap:.7rem;padding:.65rem .8rem;border-radius:8px;cursor:pointer;color:var(--muted);font-size:.85rem;font-weight:500;transition:all .2s;border:none;background:none;width:100%;text-align:left}
+.sb-link:hover{background:var(--s2);color:var(--white)}
+.sb-link.active{background:var(--cyan-dim);color:var(--cyan);border:1px solid rgba(0,229,255,.15)}
+.sb-link .ico{font-size:1rem;width:20px;text-align:center}
+.sb-badge{margin-left:auto;background:var(--red);color:#fff;font-size:.65rem;font-weight:700;padding:.15rem .45rem;border-radius:100px;min-width:18px;text-align:center}
+.sb-footer{padding:1rem 1.4rem;border-top:1px solid var(--border)}
+.sb-preview-btn{display:flex;align-items:center;gap:.5rem;color:var(--muted);font-size:.8rem;text-decoration:none;transition:color .2s;margin-bottom:.5rem}
+.sb-preview-btn:hover{color:var(--cyan)}
+.sb-logout{display:flex;align-items:center;gap:.5rem;color:var(--muted);font-size:.8rem;cursor:pointer;background:none;border:none;transition:color .2s;padding:0}
+.sb-logout:hover{color:var(--red)}
+
+/* MAIN */
+#main{margin-left:240px;flex:1;min-height:100vh}
+.top-bar{background:var(--s1);border-bottom:1px solid var(--border);padding:1.1rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40}
+.top-bar-title{font-family:var(--fh);font-weight:700;font-size:1.05rem}
+.top-bar-actions{display:flex;gap:.75rem;align-items:center}
+.save-btn{background:var(--cyan);color:#000;border:none;padding:.6rem 1.4rem;border-radius:6px;font-family:var(--fh);font-weight:700;font-size:.85rem;cursor:pointer;transition:opacity .2s,transform .2s;letter-spacing:.03em}
+.save-btn:hover{opacity:.85;transform:translateY(-1px)}
+.save-btn.saving{background:var(--green)}
+.reset-btn{background:transparent;color:var(--muted);border:1px solid var(--border);padding:.6rem 1.2rem;border-radius:6px;font-family:var(--fh);font-weight:600;font-size:.85rem;cursor:pointer;transition:all .2s}
+.reset-btn:hover{border-color:var(--red);color:var(--red)}
+
+.content{padding:2rem;max-width:900px}
+
+/* PANELS */
+.panel{display:none}
+.panel.active{display:block}
+
+/* CARDS */
+.card{background:var(--s1);border:1px solid var(--border);border-radius:12px;margin-bottom:1.5rem;overflow:hidden}
+.card-head{padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-head h3{font-family:var(--fh);font-weight:700;font-size:.95rem}
+.card-body{padding:1.5rem}
+
+/* FORM ELEMENTS */
+.fg{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.1rem}
+.fg:last-child{margin-bottom:0}
+.fg label{font-size:.75rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.08em}
+.fg input,.fg textarea,.fg select{background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:.8rem 1rem;color:var(--white);font-family:var(--fb);font-size:.9rem;outline:none;transition:border-color .2s;resize:vertical;width:100%}
+.fg input:focus,.fg textarea:focus,.fg select:focus{border-color:rgba(0,229,255,.4)}
+.fg textarea{min-height:80px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.frow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
+
+/* LISTS */
+.list-item{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:1rem 1.2rem;margin-bottom:.75rem;position:relative}
+.list-item-actions{display:flex;gap:.5rem;position:absolute;top:.8rem;right:.8rem}
+.del-btn{background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.2);color:var(--red);border-radius:5px;padding:.3rem .6rem;font-size:.75rem;cursor:pointer;transition:all .2s;font-family:var(--fh);font-weight:600}
+.del-btn:hover{background:var(--red);color:#fff}
+.add-btn{display:flex;align-items:center;gap:.5rem;background:var(--cyan-dim);border:1px solid rgba(0,229,255,.2);color:var(--cyan);border-radius:7px;padding:.7rem 1.2rem;font-size:.85rem;cursor:pointer;transition:all .2s;font-family:var(--fh);font-weight:600;margin-top:.5rem}
+.add-btn:hover{background:rgba(0,229,255,.2)}
+
+/* TOGGLE */
+.toggle-wrap{display:flex;align-items:center;gap:.8rem}
+.toggle{width:44px;height:24px;background:var(--s3);border-radius:100px;position:relative;cursor:pointer;transition:background .2s;border:none;flex-shrink:0}
+.toggle::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:3px;left:3px;transition:transform .2s}
+.toggle.on{background:var(--cyan)}
+.toggle.on::after{transform:translateX(20px)}
+.toggle-lbl{color:var(--muted);font-size:.85rem}
+
+/* MESSAGES */
+.msg-card{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:1.3rem;margin-bottom:1rem;cursor:pointer;transition:border-color .2s;position:relative}
+.msg-card:hover{border-color:rgba(0,229,255,.2)}
+.msg-card.unread{border-left:3px solid var(--cyan)}
+.msg-card.unread::before{content:'NEW';position:absolute;top:.8rem;right:.8rem;background:var(--cyan);color:#000;font-size:.65rem;font-weight:700;padding:.15rem .5rem;border-radius:100px;font-family:var(--fh)}
+.msg-head{display:flex;align-items:flex-start;gap:1rem;margin-bottom:.8rem}
+.msg-avatar{width:38px;height:38px;border-radius:50%;background:var(--cyan-dim);border:1px solid rgba(0,229,255,.2);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.msg-name{font-weight:600;font-size:.95rem}
+.msg-meta{color:var(--muted);font-size:.78rem;margin-top:.1rem}
+.msg-preview{color:#9090b0;font-size:.85rem;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.msg-detail{display:none;margin-top:1rem;border-top:1px solid var(--border);padding-top:1rem}
+.msg-detail.open{display:block}
+.msg-field{margin-bottom:.8rem}
+.msg-field strong{display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.2rem}
+.msg-field span{font-size:.9rem}
+.msg-imgs{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.5rem}
+.msg-imgs img{width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer}
+.msg-imgs img:hover{transform:scale(1.05)}
+.msg-actions{display:flex;gap:.5rem;margin-top:1rem}
+.msg-del{background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.2);color:var(--red);border-radius:6px;padding:.5rem 1rem;font-size:.8rem;cursor:pointer;font-family:var(--fh);font-weight:600}
+.msg-del:hover{background:var(--red);color:#fff}
+.msg-reply{background:var(--cyan-dim);border:1px solid rgba(0,229,255,.2);color:var(--cyan);border-radius:6px;padding:.5rem 1rem;font-size:.8rem;cursor:pointer;font-family:var(--fh);font-weight:600;text-decoration:none}
+
+.empty-state{text-align:center;padding:4rem 2rem;color:var(--muted)}
+.empty-state .em-ico{font-size:3rem;margin-bottom:1rem;display:block}
+.empty-state p{font-size:.9rem}
+
+/* IMAGE UPLOAD */
+.img-upload-area{border:2px dashed var(--border);border-radius:8px;padding:1.5rem;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;position:relative;margin-bottom:.8rem}
+.img-upload-area:hover{border-color:rgba(0,229,255,.4);background:rgba(0,229,255,.03)}
+.img-upload-area input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.img-upload-area p{color:var(--muted);font-size:.82rem}
+.img-upload-area strong{color:var(--cyan)}
+.img-prev{width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--border);display:block;margin-top:.5rem}
+
+/* STATS */
+.stats-bar-admin{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem}
+.stat-box{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:1.2rem;text-align:center}
+.stat-box .n{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--cyan)}
+.stat-box .l{color:var(--muted);font-size:.78rem;margin-top:.2rem}
+
+/* TOAST */
+.toast{position:fixed;bottom:2rem;right:2rem;background:#0d1f0d;border:1px solid var(--green);color:var(--green);padding:1rem 1.5rem;border-radius:8px;font-size:.9rem;z-index:999;transform:translateY(100px);opacity:0;transition:all .4s;font-family:var(--fh)}
+.toast.show{transform:translateY(0);opacity:1}
+
+/* LIGHTBOX */
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9998;display:none;align-items:center;justify-content:center}
+.lightbox.open{display:flex}
+.lightbox img{max-width:90vw;max-height:90vh;border-radius:8px}
+.lightbox-close{position:absolute;top:1.5rem;right:1.5rem;background:none;border:none;color:#fff;font-size:2rem;cursor:pointer}
+
+/* COLOR PICKERS */
+.color-row{display:flex;align-items:center;gap:1rem}
+.color-row input[type=color]{width:48px;height:36px;border:1px solid var(--border);border-radius:6px;background:var(--s2);padding:2px;cursor:pointer}
+
+@media(max-width:768px){
+  #sidebar{transform:translateX(-100%);transition:transform .3s}
+  #sidebar.open{transform:translateX(0)}
+  #main{margin-left:0}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">Neuro<span>Forge</span> Studio</div>
+    <div class="login-sub">Admin Panel — Secure Login</div>
+    <input type="text" id="l-user" placeholder="Username" autocomplete="off">
+    <input type="password" id="l-pass" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Login →</button>
+    <div class="login-err" id="l-err">❌ Wrong username or password</div>
+    <div style="color:var(--muted);font-size:.75rem;margin-top:1.5rem;line-height:1.6">Default: <strong style="color:var(--white)">admin</strong> / <strong style="color:var(--white)">neuroforge2025</strong><br><span style="color:rgba(255,255,255,.3)">Change this in Settings after login</span></div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-txt">Neuro<span>Forge</span></div>
+    <div class="sb-logo-sub">Admin Panel</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-section-lbl">Dashboard</div>
+    <button class="sb-link active" onclick="showPanel('dashboard',this)"><span class="ico">🏠</span>Dashboard</button>
+    <button class="sb-link" onclick="showPanel('messages',this)"><span class="ico">💬</span>Messages<span class="sb-badge" id="unread-badge" style="display:none">0</span></button>
+
+    <div class="sb-section-lbl" style="margin-top:.5rem">Website Content</div>
+    <button class="sb-link" onclick="showPanel('hero',this)"><span class="ico">🦸</span>Hero Section</button>
+    <button class="sb-link" onclick="showPanel('stats',this)"><span class="ico">📊</span>Stats Bar</button>
+    <button class="sb-link" onclick="showPanel('about',this)"><span class="ico">👋</span>About</button>
+    <button class="sb-link" onclick="showPanel('services',this)"><span class="ico">🛠️</span>Services</button>
+    <button class="sb-link" onclick="showPanel('process',this)"><span class="ico">⚙️</span>Process Steps</button>
+    <button class="sb-link" onclick="showPanel('why',this)"><span class="ico">⚡</span>Why AI Section</button>
+    <button class="sb-link" onclick="showPanel('portfolio',this)"><span class="ico">🖼️</span>Portfolio</button>
+    <button class="sb-link" onclick="showPanel('testimonials',this)"><span class="ico">⭐</span>Testimonials</button>
+    <button class="sb-link" onclick="showPanel('contact',this)"><span class="ico">📩</span>Contact Info</button>
+    <button class="sb-link" onclick="showPanel('footer',this)"><span class="ico">🦶</span>Footer</button>
+
+    <div class="sb-section-lbl" style="margin-top:.5rem">Settings</div>
+    <button class="sb-link" onclick="showPanel('settings',this)"><span class="ico">🔐</span>Password & Settings</button>
+  </nav>
+  <div class="sb-footer">
+    <a href="index.html" target="_blank" class="sb-preview-btn">🔗 View Website</a>
+    <button class="sb-logout" onclick="logout()">🚪 Logout</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div class="top-bar">
+    <div class="top-bar-title" id="panel-title">Dashboard</div>
+    <div class="top-bar-actions">
+      <button class="reset-btn" onclick="resetSection()">Reset Section</button>
+      <button class="save-btn" id="save-btn" onclick="saveAll()">💾 Save Changes</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="stats-bar-admin" id="dash-stats"></div>
+      <div class="card">
+        <div class="card-head"><h3>👋 Welcome to Your Admin Panel</h3></div>
+        <div class="card-body">
+          <p style="color:var(--muted);line-height:1.8;font-size:.9rem">From here you can edit every part of your <strong style="color:var(--white)">NeuroForge Studio</strong> website. Use the sidebar to navigate between sections.<br><br>
+          <strong style="color:var(--cyan)">How to update your website:</strong><br>
+          1. Make changes in any section<br>
+          2. Click <strong style="color:var(--white)">💾 Save Changes</strong><br>
+          3. Go to <strong style="color:var(--white)">index.html</strong> and upload to GitHub — done!<br><br>
+          <span style="color:rgba(255,255,255,.3);font-size:.82rem">Note: Data is saved in your browser. Re-download index.html from the file manager after making changes to update GitHub.</span></p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>📨 Recent Messages</h3></div>
+        <div class="card-body" id="dash-msgs"></div>
+      </div>
+    </div>
+
+    <!-- MESSAGES -->
+    <div class="panel" id="panel-messages">
+      <div id="msg-list"></div>
+    </div>
+
+    <!-- HERO -->
+    <div class="panel" id="panel-hero">
+      <div class="card">
+        <div class="card-head"><h3>Badge & Headline</h3></div>
+        <div class="card-body">
+          <div class="fg"><label>Badge Text</label><input id="h-badge" type="text"></div>
+          <div class="frow">
+            <div class="fg"><label>Headline Line 1</label><input id="h-l1" type="text"></div>
+            <div class="fg"><label>Headline Line 2 (Cyan)</label><input id="h-l2" type="text"></div>
+          </div>
+          <div class="fg"><label>Headline Line 3 (Orange)</label><input id="h-l3" type="text"></div>
+          <div class="fg"><label>Sub Text (HTML allowed)</label><textarea id="h-sub"></textarea></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Buttons</h3></div>
+        <div class="card-body">
+          <div class="frow">
+            <div class="fg"><label>Button 1 Text</label><input id="h-b1t" type="text"></div>
+            <div class="fg"><label>Button 1 Link</label><input id="h-b1l" type="text"></div>
+          </div>
+          <div class="frow">
+            <div class="fg"><label>Button 2 Text</label><input id="h-b2t" type="text"></div>
+            <div class="fg"><label>Button 2 Link</label><input id="h-b2l" type="text"></div>
+          </div>
+          <div class="fg"><label>Nav CTA Button Text</label><input id="h-ncta" type="text"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="panel" id="panel-stats">
+      <div class="card">
+        <div class="card-head"><h3>Stats Bar Items</h3><button class="add-btn" onclick="addStat()" style="margin:0">+ Add Stat</button></div>
+        <div class="card-body" id="stats-list"></div>
+      </div>
+    </div>
+
+    <!-- ABOUT -->
+    <div class="panel" id="panel-about">
+      <div class="card">
+        <div class="card-head"><h3>About Section</h3></div>
+        <div class="card-body">
+          <div class="frow">
+            <div class="fg"><label>Section Label</label><input id="abt-lbl" type="text"></div>
+            <div class="fg"><label>Section Title</label><input id="abt-ttl" type="text"></div>
+          </div>
+          <div class="fg"><label>Description</label><textarea id="abt-dsc"></textarea></div>
+          <div class="frow">
+            <div class="fg"><label>Tag 1 (Cyan)</label><input id="abt-t1" type="text"></div>
+            <div class="fg"><label>Tag 2 (Orange)</label><input id="abt-t2" type="text"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Bullet Points</h3><button class="add-btn" onclick="addBullet()" style="margin:0">+ Add Point</button></div>
+        <div class="card-body" id="bullet-list"></div>
+      </div>
+    </div>
+
+    <!-- SERVICES -->
+    <div class="panel" id="panel-services">
+      <div class="card">
+        <div class="card-head"><h3>Section Header</h3></div>
+        <div class="card-body">
+          <div class="frow">
+            <div class="fg"><label>Label</label><input id="svc-lbl" type="text"></div>
+            <div class="fg"><label>Title</label><input id="svc-ttl" type="text"></div>
+          </div>
+          <div class="fg"><label>Description</label><textarea id="svc-dsc"></textarea></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Service Cards</h3><button class="add-btn" onclick="addService()" style="margin:0">+ Add Service</button></div>
+        <div class="card-body" id="svc-list"></div>
+      </div>
+    </div>
+
+    <!-- PROCESS -->
+    <div class="panel" id="panel-process">
+      <div class="card">
+        <div class="card-head"><h3>Section Header</h3></div>
+        <div class="card-body">
+          <div class="fg"><label>Title</label><input id="proc-ttl" type="text"></div>
+          <div class="fg"><label>Description</label><textarea id="proc-dsc"></textarea></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Process Steps</h3><button class="add-btn" onclick="addStep()" style="margin:0">+ Add Step</button></div>
+        <div class="card-body" id="proc-list"></div>
+      </div>
+    </div>
+
+    <!-- WHY -->
+    <div class="panel" id="panel-why">
+      <div class="card">
+        <div class="card-head"><h3>Section Header</h3></div>
+        <div class="card-body">
+          <div class="fg"><label>Title</label><input id="why-ttl" type="text"></div>
+          <div class="fg"><label>Description</label><textarea id="why-dsc"></textarea></div>
+          <div class="frow">
+            <div class="fg"><label>Button Text</label><input id="why-bt" type="text"></div>
+            <div class="fg"><label>Button Link</label><input id="why-bl" type="text"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Why Cards</h3><button class="add-btn" onclick="addWhyCard()" style="margin:0">+ Add Card</button></div>
+        <div class="card-body" id="why-list"></div>
+      </div>
+    </div>
+
+    <!-- PORTFOLIO -->
+    <div class="panel" id="panel-portfolio">
+      <div class="card">
+        <div class="card-head"><h3>Section Header</h3></div>
+        <div class="card-body">
+          <div class="fg"><label>Title</label><input id="port-ttl" type="text"></div>
+          <div class="fg"><label>Description</label><textarea id="port-dsc"></textarea></div>
+          <div class="fg"><label>CTA Text</label><input id="port-cta" type="text"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Portfolio Items</h3><button class="add-btn" onclick="addPortItem()" style="margin:0">+ Add Item</button></div>
+        <div class="card-body" id="port-list"></div>
+      </div>
+    </div>
+
+    <!-- TESTIMONIALS -->
+    <div class="panel" id="panel-testimonials">
+      <div class="card">
+        <div class="card-head"><h3>Section Header</h3></div>
+        <div class="card-body">
+          <div class="fg"><label>Title</label><input id="test-ttl" type="text"></div>
+          <div class="fg"><label>Description</label><textarea id="test-dsc"></textarea></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Testimonials</h3><button class="add-btn" onclick="addTestimonial()" style="margin:0">+ Add Testimonial</button></div>
+        <div class="card-body" id="test-list"></div>
+      </div>
+    </div>
+
+    <!-- CONTACT -->
+    <div class="panel" id="panel-contact">
+      <div class="card">
+        <div class="card-head"><h3>Contact Information</h3></div>
+        <div class="card-body">
+          <div class="fg"><label>Email Address</label><input id="c-email" type="email"></div>
+          <div class="frow">
+            <div class="fg"><label>WhatsApp Link</label><input id="c-wa-lnk" type="text" placeholder="https://wa.me/880..."></div>
+            <div class="fg"><label>WhatsApp Display Text</label><input id="c-wa-txt" type="text"></div>
+          </div>
+          <div class="frow">
+            <div class="fg"><label>Facebook Page Link</label><input id="c-fb-lnk" type="text" placeholder="https://fb.com/..."></div>
+            <div class="fg"><label>Facebook Display Text</label><input id="c-fb-txt" type="text"></div>
+          </div>
+          <div class="frow">
+            <div class="fg"><label>LinkedIn Link</label><input id="c-li-lnk" type="text"></div>
+            <div class="fg"><label>LinkedIn Display Text</label><input id="c-li-txt" type="text"></div>
+          </div>
+          <div class="fg"><label>Instagram Link</label><input id="c-ig-lnk" type="text"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Contact Section Text</h3></div>
+        <div class="card-body">
+          <div class="fg"><label>Title</label><input id="c-ttl" type="text"></div>
+          <div class="fg"><label>Description</label><textarea id="c-dsc"></textarea></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="panel" id="panel-footer">
+      <div class="card">
+        <div class="card-head"><h3>Footer</h3></div>
+        <div class="card-body">
+          <div class="fg"><label>Footer Description</label><textarea id="foot-dsc"></textarea></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="panel" id="panel-settings">
+      <div class="card">
+        <div class="card-head"><h3>🔐 Change Password</h3></div>
+        <div class="card-body">
+          <div class="fg"><label>Username</label><input id="s-user" type="text" autocomplete="off"></div>
+          <div class="fg"><label>New Password</label><input id="s-pass" type="password" autocomplete="new-password"></div>
+          <div class="fg"><label>Confirm Password</label><input id="s-pass2" type="password"></div>
+          <button class="add-btn" onclick="changePass()" style="margin-top:.5rem">💾 Update Password</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>🗑️ Data Management</h3></div>
+        <div class="card-body">
+          <p style="color:var(--muted);font-size:.85rem;margin-bottom:1rem;line-height:1.6">Clear all messages or reset all website content to defaults.</p>
+          <div style="display:flex;gap:1rem;flex-wrap:wrap">
+            <button class="del-btn" onclick="clearMsgs()">🗑️ Clear All Messages</button>
+            <button class="del-btn" onclick="resetAll()" style="background:rgba(231,76,60,.15)">⚠️ Reset All Website Content</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<div class="toast" id="toast"></div>
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lb-img" src="" alt="">
+</div>
+
+<script>
+// ═══ DEFAULT DATA ═══
+const DEF = {
+  hero:{badge:"AI-Powered Creative Studio",l1:"FORGE YOUR",l2:"BRAND.",l3:"DOMINATE",sub:"We craft <strong>stunning posters, video ads & social creatives</strong> for physical product brands — powered entirely by AI. Faster. Smarter. Unforgettable.",btn1_txt:"Start Your Project",btn1_lnk:"#contact",btn2_txt:"See Our Services",btn2_lnk:"#services",nav_cta:"Get Started"},
+  stats:[{num:"48H",lbl:"Average Delivery"},{num:"100%",lbl:"AI-Powered"},{num:"∞",lbl:"Revisions"},{num:"3X",lbl:"Faster Than Traditional"}],
+  about:{lbl:"Who We Are",title:"We Are NeuroForge Studio",desc:"A next-generation AI creative studio built for brands that sell real, physical products — from food & snacks to beauty, home goods & more.",tag1:"AI-Powered Design",tag2:"Real Product Focus",bullets:["We specialize in physical consumer product brands","Every creative crafted using cutting-edge AI tools","Design thinking + AI speed = maximum impact","Affordable, fast, built for businesses of all sizes","100% halal-friendly — only permissible products"]},
+  services:[{icon:"🖼️",title:"Product Poster Design",desc:"Eye-catching, high-resolution posters for social media, in-store displays, and digital campaigns.",tags:["Social Media","Print Ready","Billboard"]},{icon:"🎬",title:"Video Ads & Reels",desc:"Short-form video ads for Facebook, Instagram, TikTok & YouTube. Built for maximum reach.",tags:["Reels","Story Ads","TikTok"]},{icon:"📱",title:"Social Media Creatives",desc:"Scroll-stopping posts, carousels, and stories tailored for your brand across all platforms.",tags:["Facebook","Instagram","LinkedIn"]},{icon:"🏷️",title:"Product Label & Packaging",desc:"Beautiful label mockups and packaging visuals that make your product stand out on shelves.",tags:["Label Design","Mockups","3D Render"]},{icon:"🎯",title:"Ad Campaign Bundles",desc:"Full ad creative packages with multiple formats and variants — ready to launch anywhere.",tags:["Multi-format","A/B Variants","Campaign Ready"]},{icon:"✨",title:"Brand Visual Identity",desc:"Consistent visual language — color palette, typography, and creative guidelines via AI.",tags:["Brand Kit","Style Guide","Identity"]}],
+  process:[{icon:"📋",title:"Share Your Brief",desc:"Tell us about your product, brand, target audience, and goal."},{icon:"🤖",title:"AI Creates Concepts",desc:"Our AI workflow generates multiple creative concepts tailored to your objectives."},{icon:"🎨",title:"We Refine & Polish",desc:"We select the best concepts and refine every detail until it's brand-perfect."},{icon:"🚀",title:"Deliver & Launch",desc:"Files delivered within 48 hours, with revisions until you're satisfied."}],
+  why:{title:"Why AI-Powered Design Wins",desc:"Traditional agencies are slow and expensive. We deliver better results, faster.",btn_txt:"Work With Us",btn_lnk:"#contact",cards:[{icon:"⚡",title:"10x Faster Delivery",desc:"What takes weeks at agencies takes us 24–48 hours."},{icon:"💰",title:"Affordable for Any Budget",desc:"Premium-quality creatives at startup-friendly prices."},{icon:"🎯",title:"Conversion-Focused",desc:"Every creative built to make your audience click, buy, or remember."},{icon:"🔄",title:"Unlimited Revisions",desc:"We don't stop until you love it. No hidden fees."},{icon:"📊",title:"Data-Informed Creativity",desc:"AI trained on millions of high-performing ads."}]},
+  portfolio:[{icon:"🍫",ph:"Chocolate Brand Poster",title:"Premium Chocolate Ad",sub:"Product Poster Design",img:""},{icon:"🍪",ph:"Biscuit Social Campaign",title:"Biscuit Campaign",sub:"Social Creatives",img:""},{icon:"🧴",ph:"Skincare Video Ad",title:"Skincare Video Ad",sub:"Video Advertisement",img:""},{icon:"☕",ph:"Coffee Brand Identity",title:"Coffee Brand",sub:"Brand Visual System",img:""},{icon:"🧃",ph:"Juice Product Launch",title:"Juice Launch",sub:"Campaign Bundle",img:""},{icon:"🍜",ph:"Food Brand Packaging",title:"Food Packaging",sub:"Label & Packaging",img:""}],
+  testimonials:[{stars:5,text:"The poster they made for our chocolate line was absolutely stunning. More engagement than our entire last month!",name:"Rahman S.",role:"Founder, Sweet Origins Co.",avatar:""},{stars:5,text:"Needed 5 ad formats in 2 days. NeuroForge delivered all perfectly.",name:"Fatima A.",role:"Marketing Manager, SnackHive",avatar:""},{stars:5,text:"Affordable, professional, creative. Better results than expensive agencies.",name:"Kamal H.",role:"CEO, NaturalBite Foods",avatar:""}],
+  contact:{email:"hello@neuroforgstudio.com",whatsapp_lnk:"#",whatsapp_txt:"Click to chat on WhatsApp",fb_lnk:"#",fb_txt:"@NeuroForgeStudio",li_lnk:"#",li_txt:"NeuroForge Studio",ig_lnk:"#",title:"Start Your Project Today",desc:"Fill out the form and we'll get back to you within 24 hours."},
+  footer:{desc:"AI-powered creative studio for physical product brands. Fast, affordable, and built to convert."}
+};
+
+// ═══ STATE ═══
+let DATA = {};
+let currentPanel = 'dashboard';
+
+function getCredentials(){
+  return JSON.parse(localStorage.getItem('nfs_creds')||'{"user":"admin","pass":"neuroforge2025"}');
+}
+
+function doLogin(){
+  const u=document.getElementById('l-user').value.trim();
+  const p=document.getElementById('l-pass').value;
+  const creds=getCredentials();
+  if(u===creds.user&&p===creds.pass){
+    localStorage.setItem('nfs_auth','1');
+    document.getElementById('login-screen').style.display='none';
+    initAdmin();
+  } else {
+    document.getElementById('l-err').style.display='block';
+    setTimeout(()=>document.getElementById('l-err').style.display='none',3000);
+  }
+}
+
+function logout(){
+  localStorage.removeItem('nfs_auth');
+  location.reload();
+}
+
+function changePass(){
+  const u=document.getElementById('s-user').value.trim();
+  const p=document.getElementById('s-pass').value;
+  const p2=document.getElementById('s-pass2').value;
+  if(!u||!p){return showToast('❌ Username and password required','#e74c3c');}
+  if(p!==p2){return showToast('❌ Passwords do not match','#e74c3c');}
+  localStorage.setItem('nfs_creds',JSON.stringify({user:u,pass:p}));
+  showToast('✓ Password updated successfully');
+}
+
+// ═══ INIT ═══
+function initAdmin(){
+  if(!localStorage.getItem('nfs_auth')){return;}
+  document.getElementById('login-screen').style.display='none';
+  loadData();
+  updateUnreadBadge();
+  renderDashboard();
+  loadPanel('dashboard');
+}
+
+function loadData(){
+  try{
+    const s=localStorage.getItem('nfs_data');
+    DATA=s?deepMerge(JSON.parse(JSON.stringify(DEF)),JSON.parse(s)):JSON.parse(JSON.stringify(DEF));
+  }catch(e){DATA=JSON.parse(JSON.stringify(DEF));}
+}
+
+function deepMerge(t,s){
+  const r={...t};
+  for(const k in s){
+    if(s[k]&&typeof s[k]==='object'&&!Array.isArray(s[k])){r[k]=deepMerge(t[k]||{},s[k]);}
+    else{r[k]=s[k];}
+  }
+  return r;
+}
+
+function saveAll(){
+  collectFromPanel(currentPanel);
+  localStorage.setItem('nfs_data',JSON.stringify(DATA));
+  const btn=document.getElementById('save-btn');
+  btn.textContent='✓ Saved!';btn.classList.add('saving');
+  showToast('✓ Changes saved! Update your index.html on GitHub.');
+  setTimeout(()=>{btn.textContent='💾 Save Changes';btn.classList.remove('saving');},2500);
+}
+
+function resetSection(){
+  if(!confirm('Reset this section to defaults?'))return;
+  DATA[currentPanel]=JSON.parse(JSON.stringify(DEF[currentPanel]));
+  loadPanel(currentPanel);
+  showToast('Section reset to defaults');
+}
+
+function resetAll(){
+  if(!confirm('⚠️ Reset ALL website content to defaults? This cannot be undone.'))return;
+  DATA=JSON.parse(JSON.stringify(DEF));
+  localStorage.setItem('nfs_data',JSON.stringify(DATA));
+  loadPanel(currentPanel);
+  showToast('All content reset to defaults');
+}
+
+function clearMsgs(){
+  if(!confirm('Delete ALL messages?'))return;
+  localStorage.setItem('nfs_messages','[]');
+  renderMessages();
+  updateUnreadBadge();
+  renderDashboard();
+  showToast('All messages cleared');
+}
+
+// ═══ PANEL NAV ═══
+function showPanel(name, btn){
+  collectFromPanel(currentPanel);
+  document.querySelectorAll('.sb-link').forEach(l=>l.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  document.getElementById('panel-title').textContent=btn?btn.innerText.trim():name;
+  currentPanel=name;
+  loadPanel(name);
+}
+
+function loadPanel(name){
+  switch(name){
+    case 'dashboard': renderDashboard();break;
+    case 'messages': renderMessages();break;
+    case 'hero': loadHero();break;
+    case 'stats': renderStats();break;
+    case 'about': loadAbout();break;
+    case 'services': loadServices();break;
+    case 'process': loadProcess();break;
+    case 'why': loadWhy();break;
+    case 'portfolio': loadPortfolio();break;
+    case 'testimonials': loadTestimonials();break;
+    case 'contact': loadContact();break;
+    case 'footer': loadFooter();break;
+    case 'settings': loadSettings();break;
+  }
+}
+
+function collectFromPanel(name){
+  switch(name){
+    case 'hero': collectHero();break;
+    case 'about': collectAbout();break;
+    case 'contact': collectContact();break;
+    case 'footer': collectFooter();break;
+    case 'process': collectProcess();break;
+    case 'why': collectWhy();break;
+  }
+}
+
+// ═══ HELPERS ═══
+function val(id){const el=document.getElementById(id);return el?el.value:'';}
+function setVal(id,v){const el=document.getElementById(id);if(el)el.value=v||'';}
+function showToast(msg,color){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.borderColor=color||'var(--green)';t.style.color=color||'var(--green)';
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);
+}
+function openLightbox(src){
+  document.getElementById('lb-img').src=src;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox(){document.getElementById('lightbox').classList.remove('open');}
+
+// ═══ DASHBOARD ═══
+function renderDashboard(){
+  const msgs=JSON.parse(localStorage.getItem('nfs_messages')||'[]');
+  const unread=msgs.filter(m=>!m.read).length;
+  document.getElementById('dash-stats').innerHTML=`
+    <div class="stat-box"><div class="n">${msgs.length}</div><div class="l">Total Messages</div></div>
+    <div class="stat-box"><div class="n" style="color:var(--orange)">${unread}</div><div class="l">Unread</div></div>
+    <div class="stat-box"><div class="n">${DATA.services?DATA.services.length:0}</div><div class="l">Services</div></div>
+    <div class="stat-box"><div class="n">${DATA.portfolio?DATA.portfolio.length:0}</div><div class="l">Portfolio Items</div></div>`;
+  const recent=msgs.slice(0,3);
+  document.getElementById('dash-msgs').innerHTML=recent.length?recent.map(m=>`
+    <div class="msg-card${m.read?'':' unread'}" style="margin-bottom:.75rem">
+      <div class="msg-head">
+        <div class="msg-avatar">👤</div>
+        <div><div class="msg-name">${m.name}</div><div class="msg-meta">${m.email} · ${m.date}</div></div>
+      </div>
+      <div class="msg-preview">${m.message||m.product}</div>
+    </div>`).join(''):`<div class="empty-state"><span class="em-ico">📭</span><p>No messages yet</p></div>`;
+}
+
+// ═══ MESSAGES ═══
+function updateUnreadBadge(){
+  const msgs=JSON.parse(localStorage.getItem('nfs_messages')||'[]');
+  const unread=msgs.filter(m=>!m.read).length;
+  const b=document.getElementById('unread-badge');
+  b.textContent=unread;b.style.display=unread>0?'inline-block':'none';
+}
+
+function renderMessages(){
+  const msgs=JSON.parse(localStorage.getItem('nfs_messages')||'[]');
+  const el=document.getElementById('msg-list');
+  if(!msgs.length){el.innerHTML=`<div class="empty-state"><span class="em-ico">📭</span><p>No messages received yet.<br>When clients fill your contact form, messages appear here.</p></div>`;return;}
+  el.innerHTML=msgs.map((m,i)=>`
+    <div class="msg-card${m.read?'':' unread'}" id="msg-${i}">
+      <div class="msg-head" onclick="toggleMsg(${i})">
+        <div class="msg-avatar">👤</div>
+        <div style="flex:1">
+          <div class="msg-name">${m.name}</div>
+          <div class="msg-meta">${m.email}${m.phone?' · '+m.phone:''} · ${m.date}</div>
+        </div>
+      </div>
+      <div class="msg-preview" onclick="toggleMsg(${i})">${m.message||m.product||'(no message)'}</div>
+      <div class="msg-detail" id="msg-detail-${i}">
+        ${m.product?`<div class="msg-field"><strong>Product/Brand</strong><span>${m.product}</span></div>`:''}
+        ${m.service?`<div class="msg-field"><strong>Service</strong><span>${m.service}</span></div>`:''}
+        ${m.message?`<div class="msg-field"><strong>Message</strong><span style="white-space:pre-wrap">${m.message}</span></div>`:''}
+        ${m.images&&m.images.length?`<div class="msg-field"><strong>Attached Images (${m.images.length})</strong><div class="msg-imgs">${m.images.map(img=>`<img src="${img}" onclick="event.stopPropagation();openLightbox('${img}')">`).join('')}</div></div>`:''}
+        <div class="msg-actions">
+          <a href="mailto:${m.email}?subject=Re: Your inquiry at NeuroForge Studio" class="msg-reply" target="_blank">✉️ Reply via Email</a>
+          ${m.phone?`<a href="https://wa.me/${m.phone.replace(/\D/g,'')}" class="msg-reply" target="_blank" style="background:rgba(37,211,102,.1);border-color:rgba(37,211,102,.2);color:#25d366">💬 WhatsApp</a>`:''}
+          <button class="msg-del" onclick="deleteMsg(${i})">🗑️ Delete</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function toggleMsg(i){
+  const detail=document.getElementById('msg-detail-'+i);
+  detail.classList.toggle('open');
+  // Mark as read
+  const msgs=JSON.parse(localStorage.getItem('nfs_messages')||'[]');
+  if(msgs[i]){msgs[i].read=true;localStorage.setItem('nfs_messages',JSON.stringify(msgs));}
+  document.getElementById('msg-'+i).classList.remove('unread');
+  updateUnreadBadge();
+}
+
+function deleteMsg(i){
+  if(!confirm('Delete this message?'))return;
+  const msgs=JSON.parse(localStorage.getItem('nfs_messages')||'[]');
+  msgs.splice(i,1);localStorage.setItem('nfs_messages',JSON.stringify(msgs));
+  renderMessages();updateUnreadBadge();renderDashboard();
+  showToast('Message deleted');
+}
+
+// ═══ HERO ═══
+function loadHero(){
+  setVal('h-badge',DATA.hero.badge);setVal('h-l1',DATA.hero.l1);setVal('h-l2',DATA.hero.l2);setVal('h-l3',DATA.hero.l3);
+  setVal('h-sub',DATA.hero.sub);setVal('h-b1t',DATA.hero.btn1_txt);setVal('h-b1l',DATA.hero.btn1_lnk);
+  setVal('h-b2t',DATA.hero.btn2_txt);setVal('h-b2l',DATA.hero.btn2_lnk);setVal('h-ncta',DATA.hero.nav_cta);
+}
+function collectHero(){
+  DATA.hero={badge:val('h-badge'),l1:val('h-l1'),l2:val('h-l2'),l3:val('h-l3'),sub:val('h-sub'),
+    btn1_txt:val('h-b1t'),btn1_lnk:val('h-b1l'),btn2_txt:val('h-b2t'),btn2_lnk:val('h-b2l'),nav_cta:val('h-ncta')};
+}
+
+// ═══ STATS ═══
+function renderStats(){
+  document.getElementById('stats-list').innerHTML=(DATA.stats||[]).map((s,i)=>`
+    <div class="list-item">
+      <div class="list-item-actions"><button class="del-btn" onclick="delStat(${i})">✕ Remove</button></div>
+      <div class="frow">
+        <div class="fg"><label>Number/Symbol</label><input value="${s.num}" onchange="DATA.stats[${i}].num=this.value" style="font-size:1.1rem;font-weight:700"></div>
+        <div class="fg"><label>Label</label><input value="${s.lbl}" onchange="DATA.stats[${i}].lbl=this.value"></div>
+      </div>
+    </div>`).join('');
+}
+function addStat(){DATA.stats.push({num:"NEW",lbl:"Label"});renderStats();}
+function delStat(i){DATA.stats.splice(i,1);renderStats();}
+
+// ═══ ABOUT ═══
+function loadAbout(){
+  setVal('abt-lbl',DATA.about.lbl);setVal('abt-ttl',DATA.about.title);
+  setVal('abt-dsc',DATA.about.desc);setVal('abt-t1',DATA.about.tag1);setVal('abt-t2',DATA.about.tag2);
+  renderBullets();
+}
+function collectAbout(){
+  DATA.about.lbl=val('abt-lbl');DATA.about.title=val('abt-ttl');
+  DATA.about.desc=val('abt-dsc');DATA.about.tag1=val('abt-t1');DATA.about.tag2=val('abt-t2');
+}
+function renderBullets(){
+  document.getElementById('bullet-list').innerHTML=(DATA.about.bullets||[]).map((b,i)=>`
+    <div class="list-item" style="padding:.8rem 3.5rem .8rem 1rem">
+      <div class="list-item-actions"><button class="del-btn" onclick="delBullet(${i})">✕</button></div>
+      <input value="${b}" onchange="DATA.about.bullets[${i}]=this.value" style="background:transparent;border:none;color:var(--white);font-size:.9rem;width:100%;outline:none">
+    </div>`).join('');
+}
+function addBullet(){DATA.about.bullets.push("New point here");renderBullets();}
+function delBullet(i){DATA.about.bullets.splice(i,1);renderBullets();}
+
+// ═══ SERVICES ═══
+function loadServices(){
+  setVal('svc-lbl',DATA.services?.[0]?.label||'What We Offer');
+  renderSvcList();
+}
+function renderSvcList(){
+  document.getElementById('svc-list').innerHTML=(DATA.services||[]).map((s,i)=>`
+    <div class="list-item">
+      <div class="list-item-actions"><button class="del-btn" onclick="delSvc(${i})">✕ Remove</button></div>
+      <div class="frow">
+        <div class="fg"><label>Icon (Emoji)</label><input value="${s.icon}" onchange="DATA.services[${i}].icon=this.value" style="font-size:1.5rem;text-align:center"></div>
+        <div class="fg"><label>Title</label><input value="${s.title}" onchange="DATA.services[${i}].title=this.value"></div>
+      </div>
+      <div class="fg"><label>Description</label><textarea rows="2" onchange="DATA.services[${i}].desc=this.value">${s.desc}</textarea></div>
+      <div class="fg"><label>Tags (comma separated)</label><input value="${s.tags.join(', ')}" onchange="DATA.services[${i}].tags=this.value.split(',').map(t=>t.trim())"></div>
+    </div>`).join('');
+}
+function addService(){DATA.services.push({icon:"🆕",title:"New Service",desc:"Service description here.",tags:["Tag1","Tag2"]});renderSvcList();}
+function delSvc(i){DATA.services.splice(i,1);renderSvcList();}
+
+// ═══ PROCESS ═══
+function loadProcess(){
+  setVal('proc-ttl',DATA.process?.[0]?.label||'Simple. Fast. Powerful.');
+  setVal('proc-dsc','Getting your creatives done is easier than you think.');
+  renderProcList();
+}
+function collectProcess(){
+  // steps collected via onchange
+}
+function renderProcList(){
+  document.getElementById('proc-list').innerHTML=(DATA.process||[]).map((p,i)=>`
+    <div class="list-item">
+      <div class="list-item-actions"><button class="del-btn" onclick="delStep(${i})">✕ Remove</button></div>
+      <div class="frow">
+        <div class="fg"><label>Icon (Emoji)</label><input value="${p.icon}" onchange="DATA.process[${i}].icon=this.value" style="font-size:1.3rem;text-align:center"></div>
+        <div class="fg"><label>Step Title</label><input value="${p.title}" onchange="DATA.process[${i}].title=this.value"></div>
+      </div>
+      <div class="fg"><label>Description</label><textarea rows="2" onchange="DATA.process[${i}].desc=this.value">${p.desc}</textarea></div>
+    </div>`).join('');
+}
+function addStep(){DATA.process.push({icon:"📌",title:"New Step",desc:"Step description here."});renderProcList();}
+function delStep(i){DATA.process.splice(i,1);renderProcList();}
+
+// ═══ WHY ═══
+function loadWhy(){
+  setVal('why-ttl',DATA.why.title);setVal('why-dsc',DATA.why.desc);
+  setVal('why-bt',DATA.why.btn_txt);setVal('why-bl',DATA.why.btn_lnk);
+  renderWhyList();
+}
+function collectWhy(){
+  DATA.why.title=val('why-ttl');DATA.why.desc=val('why-dsc');
+  DATA.why.btn_txt=val('why-bt');DATA.why.btn_lnk=val('why-bl');
+}
+function renderWhyList(){
+  document.getElementById('why-list').innerHTML=(DATA.why.cards||[]).map((c,i)=>`
+    <div class="list-item">
+      <div class="list-item-actions"><button class="del-btn" onclick="delWhyCard(${i})">✕ Remove</button></div>
+      <div class="frow">
+        <div class="fg"><label>Icon (Emoji)</label><input value="${c.icon}" onchange="DATA.why.cards[${i}].icon=this.value" style="font-size:1.3rem;text-align:center"></div>
+        <div class="fg"><label>Title</label><input value="${c.title}" onchange="DATA.why.cards[${i}].title=this.value"></div>
+      </div>
+      <div class="fg"><label>Description</label><textarea rows="2" onchange="DATA.why.cards[${i}].desc=this.value">${c.desc}</textarea></div>
+    </div>`).join('');
+}
+function addWhyCard(){DATA.why.cards.push({icon:"🌟",title:"New Reason",desc:"Why this matters."});renderWhyList();}
+function delWhyCard(i){DATA.why.cards.splice(i,1);renderWhyList();}
+
+// ═══ PORTFOLIO ═══
+function loadPortfolio(){
+  setVal('port-ttl',DATA.portfolio?.[0]?.label||'Creative Portfolio');
+  renderPortList();
+}
+function renderPortList(){
+  document.getElementById('port-list').innerHTML=(DATA.portfolio||[]).map((p,i)=>`
+    <div class="list-item">
+      <div class="list-item-actions"><button class="del-btn" onclick="delPort(${i})">✕ Remove</button></div>
+      <div class="frow">
+        <div class="fg"><label>Icon (Emoji, shown if no image)</label><input value="${p.icon}" onchange="DATA.portfolio[${i}].icon=this.value" style="font-size:1.3rem;text-align:center"></div>
+        <div class="fg"><label>Title (shown on hover)</label><input value="${p.title}" onchange="DATA.portfolio[${i}].title=this.value"></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Placeholder Text</label><input value="${p.ph}" onchange="DATA.portfolio[${i}].ph=this.value"></div>
+        <div class="fg"><label>Subtitle (shown on hover)</label><input value="${p.sub}" onchange="DATA.portfolio[${i}].sub=this.value"></div>
+      </div>
+      <div class="fg">
+        <label>Upload Image (replaces placeholder)</label>
+        ${p.img?`<img src="${p.img}" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--border);margin-bottom:.5rem;display:block" onclick="openLightbox('${p.img}')">`:''}
+        <div class="img-upload-area">
+          <input type="file" accept="image/*" onchange="handlePortImg(${i},this)">
+          <p><strong>Click to upload image</strong><br>PNG, JPG, WEBP</p>
+        </div>
+        ${p.img?`<button class="del-btn" onclick="DATA.portfolio[${i}].img='';renderPortList()">✕ Remove Image</button>`:''}
+      </div>
+    </div>`).join('');
+}
+function handlePortImg(i,input){
+  const file=input.files[0];if(!file)return;
+  if(file.size>3*1024*1024){showToast('Image too large (max 3MB)','#e74c3c');return;}
+  const reader=new FileReader();
+  reader.onload=e=>{DATA.portfolio[i].img=e.target.result;renderPortList();showToast('Image uploaded!');};
+  reader.readAsDataURL(file);
+}
+function addPortItem(){DATA.portfolio.push({icon:"🖼️",ph:"New portfolio item",title:"New Item",sub:"Design Type",img:""});renderPortList();}
+function delPort(i){DATA.portfolio.splice(i,1);renderPortList();}
+
+// ═══ TESTIMONIALS ═══
+function loadTestimonials(){
+  setVal('test-ttl',DATA.testimonials?.[0]?.label||"What Our Clients Say");
+  renderTestList();
+}
+function renderTestList(){
+  document.getElementById('test-list').innerHTML=(DATA.testimonials||[]).map((t,i)=>`
+    <div class="list-item">
+      <div class="list-item-actions"><button class="del-btn" onclick="delTest(${i})">✕ Remove</button></div>
+      <div class="frow">
+        <div class="fg"><label>Client Name</label><input value="${t.name}" onchange="DATA.testimonials[${i}].name=this.value"></div>
+        <div class="fg"><label>Role / Company</label><input value="${t.role}" onchange="DATA.testimonials[${i}].role=this.value"></div>
+      </div>
+      <div class="fg"><label>Stars (1–5)</label>
+        <select onchange="DATA.testimonials[${i}].stars=parseInt(this.value)">
+          ${[5,4,3,2,1].map(n=>`<option value="${n}"${t.stars===n?' selected':''}>${n} ★</option>`).join('')}
+        </select>
+      </div>
+      <div class="fg"><label>Testimonial Text</label><textarea rows="3" onchange="DATA.testimonials[${i}].text=this.value">${t.text}</textarea></div>
+      <div class="fg">
+        <label>Client Photo (optional)</label>
+        ${t.avatar?`<img src="${t.avatar}" style="width:50px;height:50px;border-radius:50%;object-fit:cover;margin-bottom:.5rem;display:block">`:''}
+        <div class="img-upload-area">
+          <input type="file" accept="image/*" onchange="handleTestImg(${i},this)">
+          <p><strong>Upload client photo</strong></p>
+        </div>
+        ${t.avatar?`<button class="del-btn" onclick="DATA.testimonials[${i}].avatar='';renderTestList()" style="margin-top:.3rem">✕ Remove Photo</button>`:''}
+      </div>
+    </div>`).join('');
+}
+function handleTestImg(i,input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{DATA.testimonials[i].avatar=e.target.result;renderTestList();};
+  reader.readAsDataURL(file);
+}
+function addTestimonial(){DATA.testimonials.push({stars:5,text:"Write testimonial here.",name:"Client Name",role:"Company",avatar:""});renderTestList();}
+function delTest(i){DATA.testimonials.splice(i,1);renderTestList();}
+
+// ═══ CONTACT ═══
+function loadContact(){
+  if(!DATA.contact)DATA.contact={};
+  setVal('c-email',DATA.contact.email);setVal('c-wa-lnk',DATA.contact.whatsapp_lnk);setVal('c-wa-txt',DATA.contact.whatsapp_txt);
+  setVal('c-fb-lnk',DATA.contact.fb_lnk);setVal('c-fb-txt',DATA.contact.fb_txt);
+  setVal('c-li-lnk',DATA.contact.li_lnk);setVal('c-li-txt',DATA.contact.li_txt);
+  setVal('c-ig-lnk',DATA.contact.ig_lnk);
+  setVal('c-ttl',DATA.contact.title||'Start Your Project Today');
+  setVal('c-dsc',DATA.contact.desc||'Fill out the form and we\'ll get back to you within 24 hours.');
+}
+function collectContact(){
+  DATA.contact={
+    email:val('c-email'),whatsapp_lnk:val('c-wa-lnk'),whatsapp_txt:val('c-wa-txt'),
+    fb_lnk:val('c-fb-lnk'),fb_txt:val('c-fb-txt'),li_lnk:val('c-li-lnk'),li_txt:val('c-li-txt'),
+    ig_lnk:val('c-ig-lnk'),title:val('c-ttl'),desc:val('c-dsc')
+  };
+}
+
+// ═══ FOOTER ═══
+function loadFooter(){setVal('foot-dsc',DATA.footer?.desc);}
+function collectFooter(){DATA.footer={desc:val('foot-dsc')};}
+
+// ═══ SETTINGS ═══
+function loadSettings(){
+  const c=getCredentials();
+  setVal('s-user',c.user);
+}
+
+// ═══ STARTUP ═══
+if(localStorage.getItem('nfs_auth')==='1'){
+  document.getElementById('login-screen').style.display='none';
+  initAdmin();
+} else {
+  // show login, bind enter key
+  document.getElementById('l-user').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+}
+</script>
+</body>
+</html>
